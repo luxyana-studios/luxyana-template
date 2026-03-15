@@ -20,6 +20,10 @@ npx expo run:ios            # build + install on iOS device
 npx tsc --noEmit            # type check
 npx biome check src/        # lint
 npx biome check --write src/ # lint + auto-fix
+
+# Testing
+npm test                    # run unit tests
+npm run test:ci             # run tests with coverage (CI mode)
 ```
 
 ## Tech Stack
@@ -36,6 +40,8 @@ npx biome check --write src/ # lint + auto-fix
 | Lists | @shopify/flash-list **v2** | No `estimatedItemSize` prop (removed in v2) |
 | Animations | react-native-reanimated **v4** | |
 | Linting | Biome **v2** | Schema `2.4.7`, `organizeImports` under `assist.actions.source` |
+| Testing | Jest + jest-expo | `jest.config.js`, `npm test` |
+| Git hooks | Lefthook | `lefthook.yml`, pre-commit: lint + format + typecheck |
 
 ## Architecture
 
@@ -149,6 +155,26 @@ To toggle theme: settings store calls `StyleSheet.configure()` with either
 - Database types in `src/types/supabase.ts` (currently a placeholder `Database` type)
 - When adding tables, regenerate types with `npx supabase gen types typescript`
 
+### Testing
+
+- **Framework**: Jest with `jest-expo` preset (handles Babel transforms and RN mocking)
+- **Config**: `jest.config.js` at project root
+- **Path alias**: `@/*` mapped via `moduleNameMapper`
+- **Test location**: colocated `__tests__/` directories inside feature folders
+- **Test naming**: `*.test.ts` / `*.test.tsx`
+- **Native mocks**: tests for stores that import native modules (Unistyles, MMKV) must mock them.
+  See `src/features/settings/stores/__tests__/settings.store.test.ts` for the pattern
+- **CI**: `npm run test:ci` runs in the GitHub Actions workflow after lint
+
+### Git Hooks (Lefthook)
+
+- **Config**: `lefthook.yml` at project root
+- **Install**: runs automatically via `prepare` script on `npm install`
+- **Pre-commit** runs in parallel:
+  - `lint` — `biome check` on staged `*.{ts,tsx,js,jsx,json}` files
+  - `format` — `biome format` on staged `*.{ts,tsx,js,jsx,json}` files
+  - `typecheck` — `tsc --noEmit` on the whole project
+
 ## Code Style
 
 - **Formatter**: Biome — 2 spaces, double quotes, semicolons always
@@ -203,6 +229,7 @@ Auth and database features won't work until `.env` is configured.
 - Hooks: `use*.ts` wrapper hooks in `features/<name>/hooks/`
 - Shared components: PascalCase files in `src/shared/components/`
 - Translations: flat JSON in `src/core/i18n/`
+- Tests: `__tests__/*.test.ts(x)` colocated in feature directories
 
 ## Environment
 
