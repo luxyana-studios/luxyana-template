@@ -30,26 +30,27 @@ export function Typography({
 const styles = StyleSheet.create((theme) => ({
   base: {
     color: theme.colors.text,
+    fontFamily: theme.typography.fonts.sans,
   },
   title: {
     fontSize: theme.typography.sizes["3xl"],
-    fontWeight: theme.typography.weights.bold,
+    fontFamily: theme.typography.fonts.sansBold,
   },
   heading: {
     fontSize: theme.typography.sizes.xl,
-    fontWeight: theme.typography.weights.semibold,
+    fontFamily: theme.typography.fonts.sansSemibold,
   },
   body: {
     fontSize: theme.typography.sizes.md,
-    fontWeight: theme.typography.weights.regular,
+    fontFamily: theme.typography.fonts.sans,
   },
   label: {
     fontSize: theme.typography.sizes.md,
-    fontWeight: theme.typography.weights.semibold,
+    fontFamily: theme.typography.fonts.sansSemibold,
   },
   caption: {
     fontSize: theme.typography.sizes.sm,
-    fontWeight: theme.typography.weights.regular,
+    fontFamily: theme.typography.fonts.sans,
     color: theme.colors.textSecondary,
   },
 }));

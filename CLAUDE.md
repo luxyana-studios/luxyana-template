@@ -38,6 +38,7 @@ npm run test:ci             # run tests with coverage (CI mode)
 | Backend | Supabase JS **v2** | `createClient<Database>()` with MMKV auth storage |
 | i18n | i18next + react-i18next | `useTranslation()`, flat key translations |
 | Lists | @shopify/flash-list **v2** | No `estimatedItemSize` prop (removed in v2) |
+| Fonts | expo-font + @expo-google-fonts/dm-sans | `useFonts()`, DM Sans 400/500/600/700 |
 | Animations | react-native-reanimated **v4** | |
 | Linting | Biome **v2** | Schema `2.4.7`, `organizeImports` under `assist.actions.source` |
 | Testing | Jest + jest-expo | `jest.config.js`, `npm test` |
@@ -103,7 +104,9 @@ src/app/
 - Auth store (`features/auth/stores/auth.store.ts`) is NOT persisted via Zustand — Supabase
   handles session persistence through the MMKV storage adapter
 - `initialize()` calls `supabase.auth.getSession()` and listens to `onAuthStateChange`
-- Splash screen stays visible until auth is initialized
+- Splash screen stays visible until BOTH auth is initialized AND fonts are loaded
+- Font loading: `useLoadFonts()` from `src/core/theme/fonts.ts` loads DM Sans weights
+- On font error, splash still hides (graceful degradation to system font)
 
 ### State Management Pattern
 
@@ -133,8 +136,9 @@ const styles = StyleSheet.create((theme) => ({
 }));
 ```
 
-Theme tokens are defined in `src/core/theme/tokens.ts` (spacing, radius, typography).
-Theme colors are in `src/core/theme/themes.ts` (light + dark).
+Theme tokens are defined in `src/core/theme/tokens.ts` (spacing, radius, typography, font families).
+Theme colors are in `src/core/theme/themes.ts` (light + dark) using the Luxyana warm/earthy palette.
+Font families in `typography.fonts` map to DM Sans weights loaded via `expo-font`.
 
 To toggle theme: settings store calls `StyleSheet.configure()` with either
 `adaptiveThemes: true` (system) or `adaptiveThemes: false, initialTheme: mode`.

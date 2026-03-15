@@ -16,6 +16,12 @@ export const radius = {
 } as const;
 
 export const typography = {
+  fonts: {
+    sans: "DMSans_400Regular",
+    sansMedium: "DMSans_500Medium",
+    sansSemibold: "DMSans_600SemiBold",
+    sansBold: "DMSans_700Bold",
+  },
   sizes: {
     xs: 12,
     sm: 14,

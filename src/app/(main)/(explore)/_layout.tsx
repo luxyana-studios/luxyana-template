@@ -9,7 +9,11 @@ export default function ExploreLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: theme.colors.background },
+        headerStyle: {
+          backgroundColor: theme.colors.background,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.colors.border,
+        } as unknown as { backgroundColor: string },
         headerTintColor: theme.colors.text,
       }}
     >
