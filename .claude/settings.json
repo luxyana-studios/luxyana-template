@@ -15,8 +15,6 @@
       "Bash(git show *)"
     ],
     "deny": [
-      "Bash(npx expo start --go)",
-      "Bash(expo start --go)",
       "Bash(rm -rf *)",
       "Bash(git push --force *)",
       "Bash(git reset --hard *)",

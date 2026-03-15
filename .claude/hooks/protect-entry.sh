@@ -2,6 +2,11 @@
 # Block edits to src/entry.ts — the module load order is critical.
 # See src/core/CLAUDE.md for why this matters.
 
+if ! command -v jq &>/dev/null; then
+  echo "Warning: jq not installed, skipping hook" >&2
+  exit 0
+fi
+
 INPUT=$(cat)
 FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
 

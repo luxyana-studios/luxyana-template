@@ -22,6 +22,7 @@ Review the current staged and unstaged changes against the project's conventions
 - Stores follow `<name>.store.ts` naming and export `use<Name>Store`
 - Components use named exports (not default)
 - New stores have corresponding tests with native module mocks
+- If a new `*.store.ts` file was added, verify a corresponding `*.store.test.ts` exists in `__tests__/`
 
 ### i18n
 - All user-facing strings use `t()` from `useTranslation()`

@@ -346,7 +346,7 @@ sizes/weights. No magic numbers — always use tokens.
 ### How do I get a custom slash command?
 
 This project has slash commands in `.claude/commands/`. Type `/` in Claude Code to see them.
-Available: `/new-feature`, `/new-screen`, `/new-tab`, `/review`, `/add-translation`, `/add-supabase-table`.
+Available: `/new-feature`, `/new-screen`, `/new-tab`, `/review`, `/review-pr`, `/incorporate-pr-review`, `/add-translation`, `/add-supabase-table`.
 
 ## Environment
 
