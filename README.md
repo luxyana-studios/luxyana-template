@@ -1,0 +1,158 @@
+# Luxyana Template
+
+Production-ready React Native app template for Luxyana. Universal (iOS, Android, Web).
+
+## Tech Stack
+
+- **Framework**: Expo SDK 54 (Expo Router, file-based routing)
+- **Styling**: Unistyles v3 (dark/light/system themes)
+- **Client state**: Zustand + MMKV persistence
+- **Server state**: TanStack React Query
+- **Backend**: Supabase (auth + database)
+- **i18n**: i18next + react-i18next (EN/ES)
+- **Lists**: FlashList
+- **Animations**: Reanimated
+- **Linting**: Biome
+
+## Prerequisites
+
+- Node.js (LTS)
+- Android SDK (for Android builds)
+- JDK 17
+- A physical device or emulator with USB debugging enabled
+
+### Android SDK Setup
+
+```bash
+# Install JDK 17
+sudo apt-get install openjdk-17-jdk
+
+# Install Android command-line tools, then:
+sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+```
+
+Add to your `~/.zshrc` (or `~/.bashrc`):
+
+```bash
+export ANDROID_HOME=$HOME/Android/Sdk
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+export PATH=$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+```
+
+## Getting Started
+
+```bash
+# Install dependencies
+npm install
+
+# Copy env file and add your Supabase credentials
+cp .env.example .env
+
+# Build and install on Android device (first time only)
+npx expo run:android
+
+# Build and install on iOS device (first time only)
+npx expo run:ios
+```
+
+## Daily Development
+
+```bash
+# Start Metro bundler — the app on your device connects automatically
+npx expo start
+```
+
+Code changes hot-reload instantly. No rebuild needed.
+
+### When to Rebuild
+
+Run `npx expo run:android` (or `run:ios`) again when:
+
+- Adding or upgrading a library with native code
+- Changing `app.config.ts` native settings (package name, permissions, etc.)
+- Changing `babel.config.js` or `metro.config.js`
+
+### Useful Commands
+
+```bash
+npx expo start --clear        # start with fresh Metro cache
+npx biome check src/          # lint
+npx biome check --write src/  # lint + auto-fix
+npx tsc --noEmit              # type check
+```
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and set:
+
+```
+EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+The app runs without these (placeholder mode with a console warning), but auth and database features won't work.
+
+## Project Structure
+
+```
+src/
+├── app/                    # Expo Router file-based routes
+│   ├── _layout.tsx         # Root layout (providers, auth gate)
+│   ├── index.tsx           # Entry redirect
+│   ├── (auth)/             # Login & signup screens
+│   └── (main)/             # Authenticated tabs
+│       ├── (home)/         # Home + detail screens
+│       ├── (explore)/      # FlashList + React Query demo
+│       └── (settings)/     # Theme, language, logout
+├── core/                   # Shared infrastructure
+│   ├── supabase/           # Supabase client
+│   ├── storage/            # MMKV instance + adapters
+│   ├── theme/              # Unistyles themes, tokens, breakpoints
+│   ├── i18n/               # i18next config + translations
+│   ├── query/              # React Query client
+│   └── providers/          # Provider composition
+├── features/               # Feature modules
+│   ├── auth/               # Auth store, hooks, components
+│   └── settings/           # Settings store + hooks
+├── shared/                 # Shared UI components
+│   └── components/         # Button, TextInput, Typography, ScreenContainer
+└── types/                  # TypeScript type definitions
+```
+
+## Connecting a Device
+
+### USB
+
+1. Enable **Developer options** on your phone (tap Build number 7 times)
+2. Enable **USB debugging** in Developer options
+3. Connect via USB and accept the debugging prompt
+4. Verify: `adb devices`
+
+### Wireless (Android 11+)
+
+1. Enable **Wireless debugging** in Developer options
+2. Tap **Pair device with pairing code**
+3. Run `adb pair <ip>:<pairing-port>` and enter the code
+4. Run `adb connect <ip>:<port>` (use the port shown under Wireless debugging)
+
+#### Troubleshooting: mDNS device not recognized by Expo
+
+If `adb devices` shows an mDNS entry (e.g. `adb-SERIAL._adb-tls-connect._tcp`) and `npx expo run:android` fails with "device not found", Expo can't resolve the mDNS device ID. Fix by connecting via IP directly:
+
+1. Get the device IP from the mDNS connection:
+   ```bash
+   adb -s "adb-SERIAL._adb-tls-connect._tcp" shell ip -f inet addr show wlan0
+   ```
+2. Find the port on your device under **Settings > Developer Options > Wireless Debugging**.
+3. Connect using the IP:
+   ```bash
+   adb connect <IP>:<PORT>
+   ```
+4. Verify with `adb devices` — you should see `<IP>:<PORT> device`.
+5. Run `npx expo run:android` again.
+
+## Important Notes
+
+- This template uses **development builds**, not Expo Go. Libraries like Unistyles v3 and MMKV v4 use Nitro Modules which require custom native code.
+- The `android/` and `ios/` directories are generated by `npx expo run:android/ios`. They are gitignored.
+- The custom entry point (`src/entry.ts`) ensures Unistyles configuration runs before Expo Router discovers routes.

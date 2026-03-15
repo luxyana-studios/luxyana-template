@@ -1,0 +1,212 @@
+# CLAUDE.md
+
+## Project Overview
+
+React Native app template for Luxyana. Universal app targeting iOS, Android, and Web.
+Uses Expo SDK 54 with development builds (NOT Expo Go).
+
+## Commands
+
+```bash
+# Development
+npx expo start              # start Metro bundler (app hot-reloads)
+npx expo start --clear      # start Metro with fresh cache (fixes stale bundle issues)
+
+# Native builds (required after adding native dependencies or changing config)
+npx expo run:android        # build + install on Android device
+npx expo run:ios            # build + install on iOS device
+
+# Quality
+npx tsc --noEmit            # type check
+npx biome check src/        # lint
+npx biome check --write src/ # lint + auto-fix
+```
+
+## Tech Stack
+
+| Category | Library | Version API |
+|---|---|---|
+| Framework | Expo SDK 54, Expo Router 6 | File-based routing in `src/app/` |
+| Styling | react-native-unistyles **v3** | `StyleSheet.create()`, `StyleSheet.configure()`, `useUnistyles()` |
+| Client state | Zustand **v5** | `create()` from `zustand`, persist middleware |
+| Server state | TanStack React Query **v5** | `useQuery()`, `useMutation()` |
+| Storage | react-native-mmkv **v4** | `createMMKV()`, `.getString()`, `.set()`, `.remove()` |
+| Backend | Supabase JS **v2** | `createClient<Database>()` with MMKV auth storage |
+| i18n | i18next + react-i18next | `useTranslation()`, flat key translations |
+| Lists | @shopify/flash-list **v2** | No `estimatedItemSize` prop (removed in v2) |
+| Animations | react-native-reanimated **v4** | |
+| Linting | Biome **v2** | Schema `2.4.7`, `organizeImports` under `assist.actions.source` |
+
+## Architecture
+
+### Entry Point & Module Load Order (CRITICAL)
+
+The app uses a custom entry point at `src/entry.ts` instead of the default `expo-router/entry`.
+This is **required** because Expo Router eagerly loads ALL route modules during route tree
+discovery. Unistyles `StyleSheet.configure()` MUST run before any `StyleSheet.create()` call.
+
+```
+src/entry.ts
+  → import "./core/theme/unistyles"   (runs StyleSheet.configure)
+  → import "./core/i18n"              (initializes i18next)
+  → import "expo-router/entry"        (now safe to discover routes)
+```
+
+If you add new side-effect imports that must run before routes load, add them to `src/entry.ts`
+BEFORE the `expo-router/entry` import.
+
+### Babel Plugin Order
+
+In `babel.config.js`, plugins must be in this order:
+1. `react-native-unistyles/plugin` (with `{ root: __dirname }`) — transforms `StyleSheet.create()` calls
+2. `react-native-reanimated/plugin` — MUST be last
+
+### Metro Config
+
+`metro.config.js` sets `resolver.unstable_conditionNames` to `["react-native", "require", "default"]`.
+This forces CJS resolution for packages like Zustand that use `import.meta.env` in ESM builds,
+which breaks Metro's non-module script output.
+
+### Routing Structure
+
+```
+src/app/
+├── _layout.tsx           # Root: AppProviders + AuthGate + Slot
+├── index.tsx             # Redirects to /(main)/(home)
+├── (auth)/
+│   ├── _layout.tsx       # Headerless Stack
+│   ├── login.tsx
+│   └── signup.tsx
+└── (main)/
+    ├── _layout.tsx       # Tabs (Home, Explore, Settings)
+    ├── (home)/
+    │   ├── _layout.tsx   # Stack
+    │   ├── index.tsx     # Home screen
+    │   └── [id].tsx      # Detail screen
+    ├── (explore)/
+    │   ├── _layout.tsx   # Stack
+    │   └── index.tsx     # FlashList + React Query
+    └── (settings)/
+        ├── _layout.tsx   # Stack
+        └── index.tsx     # Theme, language, logout
+```
+
+### Auth Flow
+
+- `AuthGate` in root layout redirects based on session state and current route segment
+- Auth store (`features/auth/stores/auth.store.ts`) is NOT persisted via Zustand — Supabase
+  handles session persistence through the MMKV storage adapter
+- `initialize()` calls `supabase.auth.getSession()` and listens to `onAuthStateChange`
+- Splash screen stays visible until auth is initialized
+
+### State Management Pattern
+
+- **Zustand stores** for client state. Feature stores live in `features/<name>/stores/`
+- **Settings store** IS persisted via Zustand persist + MMKV (`zustandMMKVStorage` adapter)
+- **Auth store** is NOT persisted — Supabase manages session persistence via `supabaseMMKVStorage`
+- **React Query** for server state (API calls, data fetching)
+- Zustand stores do NOT need React providers. Only `QueryClientProvider` is in the provider tree
+
+### Styling Pattern
+
+All components use Unistyles v3 API:
+
+```tsx
+import { StyleSheet } from "react-native-unistyles";
+
+// In components that need the theme object directly:
+import { useUnistyles } from "react-native-unistyles";
+const { theme } = useUnistyles();
+
+// Stylesheets — theme is passed as a function argument:
+const styles = StyleSheet.create((theme) => ({
+  container: {
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.background,
+  },
+}));
+```
+
+Theme tokens are defined in `src/core/theme/tokens.ts` (spacing, radius, typography).
+Theme colors are in `src/core/theme/themes.ts` (light + dark).
+
+To toggle theme: settings store calls `StyleSheet.configure()` with either
+`adaptiveThemes: true` (system) or `adaptiveThemes: false, initialTheme: mode`.
+
+### i18n Pattern
+
+- Flat key translations in `src/core/i18n/en.json` and `es.json`
+- Keys follow `section.key` format: `"auth.login"`, `"settings.theme"`, `"common.logout"`
+- Use `const { t } = useTranslation()` then `t("section.key")`
+- Interpolation: `t("home.welcome", { name: "John" })` with `"home.welcome": "Welcome, {{name}}!"`
+- Adding a language: create the JSON file, add it to `resources` in `src/core/i18n/index.ts`,
+  add an entry to the languages array in the settings screen
+
+### Supabase
+
+- Client configured with `detectSessionInUrl: false` (React Native, not a browser)
+- Uses MMKV for auth token storage (30x faster than AsyncStorage, synchronous)
+- Database types in `src/types/supabase.ts` (currently a placeholder `Database` type)
+- When adding tables, regenerate types with `npx supabase gen types typescript`
+
+## Code Style
+
+- **Formatter**: Biome — 2 spaces, double quotes, semicolons always
+- **Imports**: organized by Biome assist (auto-sorted)
+- **Path alias**: `@/*` maps to `src/*`
+- **TypeScript**: strict mode enabled
+- **Components**: raw RN primitives (no component library), shared components in `src/shared/components/`
+- **Feature structure**: `features/<name>/` with `stores/`, `hooks/`, `components/` subdirectories
+
+## Common Pitfalls
+
+### Expo Go Does NOT Work
+
+This project uses Nitro Modules (Unistyles v3, MMKV v4) which require custom native code.
+Expo Go is a pre-built app that cannot load custom native modules. Always use development builds
+(`npx expo run:android` / `npx expo run:ios`).
+
+### Stale Metro Cache
+
+If you see "Unable to resolve module" errors after changing babel/metro config or updating
+native packages, restart Metro with `--clear`:
+```bash
+npx expo start --clear
+```
+
+### FlashList v2
+
+`estimatedItemSize` prop was removed in FlashList v2. Do not add it.
+
+### Biome v2
+
+- Schema URL must match installed version (currently `2.4.7`)
+- `organizeImports` goes under `assist.actions.source`, NOT top-level
+
+### Adding Native Dependencies
+
+After installing any package that includes native code:
+1. Stop Metro
+2. Run `npx expo run:android` (or `run:ios`) to rebuild
+3. Metro restarts automatically after the build
+
+### Supabase Not Configured
+
+The app runs without Supabase credentials (placeholder mode). A console warning appears.
+Auth and database features won't work until `.env` is configured.
+
+## File Conventions
+
+- Route screens: `src/app/**/*.tsx` — default exports only
+- Layouts: `_layout.tsx` in each route directory
+- Stores: `*.store.ts` — export the hook directly (e.g., `useAuthStore`)
+- Hooks: `use*.ts` wrapper hooks in `features/<name>/hooks/`
+- Shared components: PascalCase files in `src/shared/components/`
+- Translations: flat JSON in `src/core/i18n/`
+
+## Environment
+
+- `android/` and `ios/` directories are gitignored — generated by `expo run:*`
+- `.env` is gitignored — copy from `.env.example`
+- Custom entry point declared in `package.json` as `"main": "./src/entry.ts"`
+- Expo Router root set to `./src/app` via plugin config in `app.config.ts`
