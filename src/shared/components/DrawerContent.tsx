@@ -11,10 +11,7 @@ import { useAuthStore } from "@/features/auth/stores/auth.store";
 import { Button } from "@/shared/components/Button";
 import { Typography } from "@/shared/components/Typography";
 
-export function DrawerContent({
-  navigation,
-  ...props
-}: DrawerContentComponentProps) {
+export function DrawerContent({ navigation }: DrawerContentComponentProps) {
   const { t } = useTranslation();
   const { theme } = useUnistyles();
   const insets = useSafeAreaInsets();
