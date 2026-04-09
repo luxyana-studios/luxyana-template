@@ -59,29 +59,35 @@ export function DrawerContent({ navigation }: DrawerContentComponentProps) {
 
       <View style={styles.divider} />
 
-      <Pressable
-        style={styles.navItem}
-        onPress={() => navigate("/(main)/(tabs)/(home)")}
-      >
-        <Ionicons name="home-outline" size={20} color={theme.colors.text} />
-        <Typography variant="body">{t("home.title")}</Typography>
-      </Pressable>
+      <View style={styles.nav}>
+        <Pressable
+          style={styles.navItem}
+          onPress={() => navigate("/(main)/(tabs)/(home)")}
+        >
+          <Ionicons name="home-outline" size={20} color={theme.colors.text} />
+          <Typography variant="body">{t("home.title")}</Typography>
+        </Pressable>
 
-      <Pressable
-        style={styles.navItem}
-        onPress={() => navigate("/(main)/(tabs)/(explore)")}
-      >
-        <Ionicons name="search-outline" size={20} color={theme.colors.text} />
-        <Typography variant="body">{t("explore.title")}</Typography>
-      </Pressable>
+        <Pressable
+          style={styles.navItem}
+          onPress={() => navigate("/(main)/(tabs)/(explore)")}
+        >
+          <Ionicons name="search-outline" size={20} color={theme.colors.text} />
+          <Typography variant="body">{t("explore.title")}</Typography>
+        </Pressable>
 
-      <Pressable
-        style={styles.navItem}
-        onPress={() => navigate("/(main)/(settings)")}
-      >
-        <Ionicons name="settings-outline" size={20} color={theme.colors.text} />
-        <Typography variant="body">{t("settings.title")}</Typography>
-      </Pressable>
+        <Pressable
+          style={styles.navItem}
+          onPress={() => navigate("/(main)/(settings)")}
+        >
+          <Ionicons
+            name="settings-outline"
+            size={20}
+            color={theme.colors.text}
+          />
+          <Typography variant="body">{t("settings.title")}</Typography>
+        </Pressable>
+      </View>
 
       <View style={styles.footer}>
         <Typography variant="caption">
@@ -100,8 +106,10 @@ export function DrawerContent({ navigation }: DrawerContentComponentProps) {
 const styles = StyleSheet.create((theme) => ({
   container: {
     flex: 1,
-    justifyContent: "space-between" as const,
     paddingHorizontal: theme.spacing.lg,
+  },
+  nav: {
+    flex: 1,
   },
   profile: {
     paddingVertical: theme.spacing.xl,
